@@ -1,0 +1,57 @@
+#For a better understanding of the code, we recommend following the manuscript subsection phonon confinement model
+#this code fits for two parameters: crystallite size and intensity
+
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import numpy as np
+import scipy.integrate as integrate
+from scipy.optimize import curve_fit
+import math
+import pandas
+import csv
+from scipy.integrate import quad
+#the needed packages
+
+#open the intensity vs wave number data of the Eg peak for fitting
+with open("data.csv","r") as file:
+    rawdata=list(csv.reader(file, delimiter=","))
+    exampledata=np.array(rawdata[0:],dtype=np.float)
+    xdata=exampledata[:, 0]
+    xdata = [x for x in xdata]
+    ydata=exampledata[:, 1]
+
+#this command is for plotting the peak data 
+    plt.plot(xdata,ydata,label="Eg peak")
+
+# half the width of brillouin zone (1D case)
+    n=math.pi/0.3768
+#0.3768 is the lattice parameter of TiO2 anatase
+
+# define the function inside the integral
+#d=crystallite size
+#x=wave number
+#s=wave vector 
+#A=intensity
+    def phonon(s,x,d, A):
+        return A*((math.sin(s*d/2))**2/(4*math.pi**2-s**2*d**2)**2)/((x-142.9-2.23*3*s**2)**2+3.5**2)
+#define the integral
+    def intg(xdata, d, A) :
+        ys = [quad(phonon, -n, n, args=(x,d, A))[0] for x in xdata]
+        return ys
+
+#curve fitting command
+#p0=[5,5000] represent initial crytallite size and intensity
+    popt, pcov = curve_fit(intg, xdata, ydata,p0=[5,5000])
+
+#range of fitting wave number in 100 to 260 cm^(-1)
+    xFit=np.arange(100,+260.0, 1)
+
+#ploting the fitted curve + plot options
+    print(popt)
+    plt.plot(xFit, intg(xFit, *popt), 'r', label='fited curve')
+    plt.xlabel('wave number')
+    plt.ylabel('intensity (a.u.)')
+    plt.legend()
+    plt.show()
+
+#please do cite the article and share the code with whom they need it. Best of luck.
